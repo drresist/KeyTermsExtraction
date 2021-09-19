@@ -8,9 +8,7 @@ import pandas as pd
 # nltk.download()
 
 """
-Objectives
 In this stage, your program should:
-
 Read an XML-file containing stories and headlines.
 Extract the headers and the text.
 Tokenize each text.
