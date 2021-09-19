@@ -1,17 +1,21 @@
+import string
 from lxml import etree
 import nltk
+from nltk.corpus import stopwords
 
+# nltk.download('averaged_perceptron_tagger')
 # nltk.download()
 
 """
-Read an XML file containing news stories and headlines.
-Extract the headers and the text.
-Tokenize the texts.
-For each story, find the most frequent tokens that appear in it.
+Objectives
+In this stage, your program should:
 
-Print the headline of each news story the five most frequent tokens in descending order. 
-Take a look at a sample below. 
-Also, display the titles and keywords in the same order they are presented in the file.
+Read an XML-file containing news stories and headlines.
+Extract the headers and the text.
+Tokenize each text.
+Lemmatize each word in the story.
+Get rid of punctuation and the stopwords provided by NLTK.
+For each news story, find the most frequent nouns.
 """
 
 
@@ -21,22 +25,30 @@ def read_file(filename) -> dict:
     xml_tree = etree.parse(filename).getroot()
     headers = [news[0].text for news in xml_tree[0]]
     text = [news[1].text for news in xml_tree[0]]
-    
+
     return dict(zip(headers, text))
 
 
 # Tokenize the texts.
 def tokenize_text(dictionary: dict) -> dict:
-    tokens = []
-    for _, text in dictionary.items():
-        tokens.append(nltk.tokenize.word_tokenize(str(text).lower()))
-    return dict(zip(dictionary.keys(), tokens))
+    tokens_list = []
+    lemmatizer = nltk.WordNetLemmatizer()  # lemmatizer
+    stop_words = stopwords.words("english") + list(string.punctuation)
+    for header, text in dictionary.items():
+        tokens = nltk.tokenize.word_tokenize(text.lower())
+        lemma = [lemmatizer.lemmatize(x) for x in tokens]
+        lemma = [x for x in lemma if x not in stop_words]
+        pos_tags = [
+            nltk.pos_tag([w])[0][0] for w in lemma if nltk.pos_tag([w])[0][1] == "NN"
+        ]
+        tokens_list.append(pos_tags)
+    return dict(zip(dictionary.keys(), tokens_list))
 
 
 # For each story, find the most frequent tokens that appear in it.
 def count_frequency(dictionary: dict) -> dict:
     freq_dict = []
-    for _, tokens in dictionary.items():
+    for header, tokens in dictionary.items():
         tokens = sorted(tokens, reverse=True)
         fdist = nltk.FreqDist(tokens)
         freq_dict.append([i[0] for i in fdist.most_common(5)])
@@ -49,6 +61,7 @@ def print_output(dictionary: dict):
         print(header + ":")
         print(" ".join(most_frequent_word))
 
+    return 0
 
 
 def main():
